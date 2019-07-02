@@ -1,30 +1,71 @@
+#!/usr/bin/env python
+
 import RPi.GPIO as GPIO
 import time
+import time
+from bmp280 import BMP280
 
-servoPIN = 17
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(servoPIN, GPIO.OUT)
-
-p = GPIO.PWM(servoPIN, 50) # GPIO 17 als PWM mit 50Hz
-p.start(2.5) # Initialisierung
 try:
-  while True:
-    p.ChangeDutyCycle(5)
-    time.sleep(0.5)
-    p.ChangeDutyCycle(7.5)
-    time.sleep(0.5)
-    p.ChangeDutyCycle(10)
-    time.sleep(0.5)
-    p.ChangeDutyCycle(12.5)
-    time.sleep(0.5)
-    p.ChangeDutyCycle(10)
-    time.sleep(0.5)
-    p.ChangeDutyCycle(7.5)
-    time.sleep(0.5)
-    p.ChangeDutyCycle(5)
-    time.sleep(0.5)
-    p.ChangeDutyCycle(2.5)
-    time.sleep(0.5)
-except KeyboardInterrupt:
-  p.stop()
-  GPIO.cleanup()
+    from smbus2 import SMBus
+except ImportError:
+    from smbus import SMBus
+
+print("""relative-altitude.py - Calculates relative altitude from pressure.
+
+Press Ctrl+C to exit!
+
+""")
+
+# Initialise the BMP280
+bus = SMBus(1)
+bmp280 = BMP280(i2c_dev=bus)
+
+baseline_values = []
+baseline_size = 50
+
+print("Collecting baseline values for {:d} seconds. Do not move the sensor!\n".format(baseline_size))
+
+for i in range(baseline_size):
+    pressure = bmp280.get_pressure()
+    baseline_values.append(pressure)
+    time.sleep(1)
+
+baseline = sum(baseline_values[:-25]) / len(baseline_values[:-25])
+altitude1 = bmp280.get_altitude(qnh=baseline)
+while True:
+    altitude = bmp280.get_altitude(qnh=baseline)
+    print('Relative altitude: {:05.2f} metres'.format(altitude))
+    time.sleep(1)
+    if altitude > altitude1 + 0.1 :            
+
+            servoPIN = 17
+            GPIO.setwarnings(False)
+            GPIO.setmode(GPIO.BCM)
+            GPIO.setup(servoPIN, GPIO.OUT)
+
+            p = GPIO.PWM(servoPIN,50) # GPIO 17 als PWM mit 50Hz
+            p.start(2.1) # Initialisierung
+            try:
+                #p.ChangeDutyCycle(0)
+                #p.ChangeDutyCycle(4.9)
+                #time.sleep(0.5)
+                #p.ChangeDutyCycle(0)
+                #time.sleep(0.5)
+                #p.ChangeDutyCycle(3.1)
+                #time.sleep(0.5)
+                #p.ChangeDutyCycle(0)
+                print ("p")
+                
+                
+                
+            except KeyboardInterrupt:
+              p.stop()
+              GPIO.cleanup()
+             
+                
+                    
+                    
+
+
+
+
